@@ -61,14 +61,10 @@ static usbd_device *gd32f470_usbd_init(void) {
   OTG_FS_GRSTCTL |= OTG_GRSTCTL_CSRST;
   while (OTG_FS_GRSTCTL & OTG_GRSTCTL_CSRST)
     ;
+  /*Adjust for gd32f470.*/
+  OTG_FS_GCCFG |= OTG_GCCFG_VBUSBSEN | OTG_GCCFG_VBUSASEN | OTG_GCCFG_PWRDWN;
+  OTG_FS_GCCFG |= OTG_GCCFG_NOVBUSSENS;
 
-  if (OTG_FS_CID >= OTG_CID_HAS_VBDEN) {
-    /* Enable VBUS detection in device mode and power up the PHY. */
-    OTG_FS_GCCFG |= OTG_GCCFG_VBDEN | OTG_GCCFG_PWRDWN;
-  } else {
-    /* Enable VBUS sensing in device mode and power up the PHY. */
-    OTG_FS_GCCFG |= OTG_GCCFG_VBUSBSEN | OTG_GCCFG_PWRDWN;
-  }
   /* Explicitly enable DP pullup (not all cores do this by default) */
   OTG_FS_DCTL &= ~OTG_DCTL_SDIS;
 
