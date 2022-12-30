@@ -34,6 +34,10 @@ Devices can have up to 3 USARTs and 2 UARTs.
 #include <libopencm3/stm32/usart.h>
 #include <libopencm3/stm32/rcc.h>
 
+#if GD32F470
+#include "gd32f4xx.h"
+#endif
+
 /*---------------------------------------------------------------------------*/
 /** @brief USART Set Baudrate.
 
@@ -50,38 +54,52 @@ usart_reg_base
 @param[in] baud unsigned 32 bit. Baud rate specified in Hz.
 */
 
-void usart_set_baudrate(uint32_t usart, uint32_t baud)
-{
-	uint32_t clock = rcc_apb1_frequency;
-
-#if defined USART1
-	if ((usart == USART1)
-#if defined USART6
-		|| (usart == USART6)
-#endif
-		) {
-		clock = rcc_apb2_frequency;
-	}
-#endif
-
-	/*
-	 * Yes it is as simple as that. The reference manual is
-	 * talking about fractional calculation but it seems to be only
-	 * marketing babble to sound awesome. It is nothing else but a
-	 * simple divider to generate the correct baudrate.
-	 *
-	 * Note: We round() the value rather than floor()ing it, for more
-	 * accurate divisor selection.
-	 */
-#ifdef LPUART1
-	if (usart == LPUART1) {
-		USART_BRR(usart) = (clock / baud) * 256
-			+ ((clock % baud) * 256 + baud / 2) / baud;
-		return;
-	}
-#endif
-
-	USART_BRR(usart) = (clock + baud / 2) / baud;
+void usart_set_baudrate(uint32_t usart, uint32_t baud) {
+  uint32_t uclk = 0U, intdiv = 0U, fradiv = 0U, udiv = 0U;
+  switch (usart) {
+    /* get clock frequency */
+    case USART0:
+      uclk = rcu_clock_freq_get(CK_APB2);
+      break;
+    case USART5:
+      uclk = rcu_clock_freq_get(CK_APB2);
+      break;
+    case USART1:
+      uclk = rcu_clock_freq_get(CK_APB1);
+      break;
+    case USART2:
+      uclk = rcu_clock_freq_get(CK_APB1);
+      break;
+    case UART3:
+      uclk = rcu_clock_freq_get(CK_APB1);
+      break;
+    case UART4:
+      uclk = rcu_clock_freq_get(CK_APB1);
+      break;
+    case UART6:
+      uclk = rcu_clock_freq_get(CK_APB1);
+      break;
+    case UART7:
+      uclk = rcu_clock_freq_get(CK_APB1);
+      break;
+    default:
+      break;
+  }
+  if (USART_CTL0(usart) & USART_CTL0_OVSMOD) {
+    /* when oversampling by 8, configure the value of USART_BAUD */
+    udiv = ((2U * uclk) + baud / 2U) / baud;
+    intdiv = udiv & 0xfff0U;
+    fradiv = (udiv >> 1U) & 0x7U;
+    USART_BAUD(usart) =
+        ((USART_BAUD_FRADIV | USART_BAUD_INTDIV) & (intdiv | fradiv));
+  } else {
+    /* when oversampling by 16, configure the value of USART_BAUD */
+    udiv = (uclk + baud / 2U) / baud;
+    intdiv = udiv & 0xfff0U;
+    fradiv = udiv & 0xfU;
+    USART_BAUD(usart) =
+        ((USART_BAUD_FRADIV | USART_BAUD_INTDIV) & (intdiv | fradiv));
+  }
 }
 
 /*---------------------------------------------------------------------------*/
@@ -96,13 +114,12 @@ usart_reg_base
 @param[in] bits unsigned 32 bit. Word length in bits 8 or 9.
 */
 
-void usart_set_databits(uint32_t usart, uint32_t bits)
-{
-	if (bits == 8) {
-		USART_CR1(usart) &= ~USART_CR1_M; /* 8 data bits */
-	} else {
-		USART_CR1(usart) |= USART_CR1_M;  /* 9 data bits */
-	}
+void usart_set_databits(uint32_t usart, uint32_t bits) {
+  if (bits == 8) {
+    USART_CR1(usart) &= ~USART_CR1_M; /* 8 data bits */
+  } else {
+    USART_CR1(usart) |= USART_CR1_M; /* 9 data bits */
+  }
 }
 
 /*---------------------------------------------------------------------------*/
@@ -115,13 +132,12 @@ usart_reg_base
 @param[in] stopbits unsigned 32 bit. Stop bits @ref usart_cr2_stopbits.
 */
 
-void usart_set_stopbits(uint32_t usart, uint32_t stopbits)
-{
-	uint32_t reg32;
+void usart_set_stopbits(uint32_t usart, uint32_t stopbits) {
+  uint32_t reg32;
 
-	reg32 = USART_CR2(usart);
-	reg32 = (reg32 & ~USART_CR2_STOPBITS_MASK) | stopbits;
-	USART_CR2(usart) = reg32;
+  reg32 = USART_CR2(usart);
+  reg32 = (reg32 & ~USART_CR2_STOPBITS_MASK) | stopbits;
+  USART_CR2(usart) = reg32;
 }
 
 /*---------------------------------------------------------------------------*/
@@ -134,13 +150,12 @@ usart_reg_base
 @param[in] parity unsigned 32 bit. Parity @ref usart_cr1_parity.
 */
 
-void usart_set_parity(uint32_t usart, uint32_t parity)
-{
-	uint32_t reg32;
+void usart_set_parity(uint32_t usart, uint32_t parity) {
+  uint32_t reg32;
 
-	reg32 = USART_CR1(usart);
-	reg32 = (reg32 & ~USART_PARITY_MASK) | parity;
-	USART_CR1(usart) = reg32;
+  reg32 = USART_CR1(usart);
+  reg32 = (reg32 & ~USART_PARITY_MASK) | parity;
+  USART_CR1(usart) = reg32;
 }
 
 /*---------------------------------------------------------------------------*/
@@ -153,13 +168,12 @@ usart_reg_base
 @param[in] mode unsigned 32 bit. Mode @ref usart_cr1_mode.
 */
 
-void usart_set_mode(uint32_t usart, uint32_t mode)
-{
-	uint32_t reg32;
+void usart_set_mode(uint32_t usart, uint32_t mode) {
+  uint32_t reg32;
 
-	reg32 = USART_CR1(usart);
-	reg32 = (reg32 & ~USART_MODE_MASK) | mode;
-	USART_CR1(usart) = reg32;
+  reg32 = USART_CR1(usart);
+  reg32 = (reg32 & ~USART_MODE_MASK) | mode;
+  USART_CR1(usart) = reg32;
 }
 
 /*---------------------------------------------------------------------------*/
@@ -172,13 +186,12 @@ usart_reg_base
 @param[in] flowcontrol unsigned 32 bit. Flowcontrol @ref usart_cr3_flowcontrol.
 */
 
-void usart_set_flow_control(uint32_t usart, uint32_t flowcontrol)
-{
-	uint32_t reg32;
+void usart_set_flow_control(uint32_t usart, uint32_t flowcontrol) {
+  uint32_t reg32;
 
-	reg32 = USART_CR3(usart);
-	reg32 = (reg32 & ~USART_FLOWCONTROL_MASK) | flowcontrol;
-	USART_CR3(usart) = reg32;
+  reg32 = USART_CR3(usart);
+  reg32 = (reg32 & ~USART_FLOWCONTROL_MASK) | flowcontrol;
+  USART_CR3(usart) = reg32;
 }
 
 /*---------------------------------------------------------------------------*/
@@ -188,10 +201,7 @@ void usart_set_flow_control(uint32_t usart, uint32_t flowcontrol)
 usart_reg_base
 */
 
-void usart_enable(uint32_t usart)
-{
-	USART_CR1(usart) |= USART_CR1_UE;
-}
+void usart_enable(uint32_t usart) { USART_CR1(usart) |= USART_CR1_UE; }
 
 /*---------------------------------------------------------------------------*/
 /** @brief USART Disable.
@@ -202,10 +212,7 @@ At the end of the current frame, the USART is disabled to reduce power.
 usart_reg_base
 */
 
-void usart_disable(uint32_t usart)
-{
-	USART_CR1(usart) &= ~USART_CR1_UE;
-}
+void usart_disable(uint32_t usart) { USART_CR1(usart) &= ~USART_CR1_UE; }
 
 /*---------------------------------------------------------------------------*/
 /** @brief USART Send Data Word with Blocking
@@ -218,10 +225,9 @@ usart_reg_base
 @param[in] data unsigned 16 bit.
 */
 
-void usart_send_blocking(uint32_t usart, uint16_t data)
-{
-	usart_wait_send_ready(usart);
-	usart_send(usart, data);
+void usart_send_blocking(uint32_t usart, uint16_t data) {
+  usart_wait_send_ready(usart);
+  usart_send(usart, data);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -234,11 +240,10 @@ usart_reg_base
 @returns unsigned 16 bit data word.
 */
 
-uint16_t usart_recv_blocking(uint32_t usart)
-{
-	usart_wait_recv_ready(usart);
+uint16_t usart_recv_blocking(uint32_t usart) {
+  usart_wait_recv_ready(usart);
 
-	return usart_recv(usart);
+  return usart_recv(usart);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -254,10 +259,7 @@ DMA is available on:
 usart_reg_base
 */
 
-void usart_enable_rx_dma(uint32_t usart)
-{
-	USART_CR3(usart) |= USART_CR3_DMAR;
-}
+void usart_enable_rx_dma(uint32_t usart) { USART_CR3(usart) |= USART_CR3_DMAR; }
 
 /*---------------------------------------------------------------------------*/
 /** @brief USART Receiver DMA Disable.
@@ -266,9 +268,8 @@ void usart_enable_rx_dma(uint32_t usart)
 usart_reg_base
 */
 
-void usart_disable_rx_dma(uint32_t usart)
-{
-	USART_CR3(usart) &= ~USART_CR3_DMAR;
+void usart_disable_rx_dma(uint32_t usart) {
+  USART_CR3(usart) &= ~USART_CR3_DMAR;
 }
 
 /*---------------------------------------------------------------------------*/
@@ -284,10 +285,7 @@ DMA is available on:
 usart_reg_base
 */
 
-void usart_enable_tx_dma(uint32_t usart)
-{
-	USART_CR3(usart) |= USART_CR3_DMAT;
-}
+void usart_enable_tx_dma(uint32_t usart) { USART_CR3(usart) |= USART_CR3_DMAT; }
 
 /*---------------------------------------------------------------------------*/
 /** @brief USART Transmitter DMA Disable.
@@ -296,9 +294,8 @@ void usart_enable_tx_dma(uint32_t usart)
 usart_reg_base
 */
 
-void usart_disable_tx_dma(uint32_t usart)
-{
-	USART_CR3(usart) &= ~USART_CR3_DMAT;
+void usart_disable_tx_dma(uint32_t usart) {
+  USART_CR3(usart) &= ~USART_CR3_DMAT;
 }
 
 /*---------------------------------------------------------------------------*/
@@ -308,11 +305,9 @@ void usart_disable_tx_dma(uint32_t usart)
 usart_reg_base
 */
 
-void usart_enable_rx_interrupt(uint32_t usart)
-{
-	USART_CR1(usart) |= USART_CR1_RXNEIE;
+void usart_enable_rx_interrupt(uint32_t usart) {
+  USART_CR1(usart) |= USART_CR1_RXNEIE;
 }
-
 
 /*---------------------------------------------------------------------------*/
 /** @brief USART Receiver Interrupt Disable.
@@ -321,9 +316,8 @@ void usart_enable_rx_interrupt(uint32_t usart)
 usart_reg_base
 */
 
-void usart_disable_rx_interrupt(uint32_t usart)
-{
-	USART_CR1(usart) &= ~USART_CR1_RXNEIE;
+void usart_disable_rx_interrupt(uint32_t usart) {
+  USART_CR1(usart) &= ~USART_CR1_RXNEIE;
 }
 
 /*---------------------------------------------------------------------------*/
@@ -333,9 +327,8 @@ void usart_disable_rx_interrupt(uint32_t usart)
 usart_reg_base
 */
 
-void usart_enable_tx_interrupt(uint32_t usart)
-{
-	USART_CR1(usart) |= USART_CR1_TXEIE;
+void usart_enable_tx_interrupt(uint32_t usart) {
+  USART_CR1(usart) |= USART_CR1_TXEIE;
 }
 
 /*---------------------------------------------------------------------------*/
@@ -345,35 +338,32 @@ void usart_enable_tx_interrupt(uint32_t usart)
 usart_reg_base
 */
 
-void usart_disable_tx_interrupt(uint32_t usart)
-{
-	USART_CR1(usart) &= ~USART_CR1_TXEIE;
+void usart_disable_tx_interrupt(uint32_t usart) {
+  USART_CR1(usart) &= ~USART_CR1_TXEIE;
 }
 
 /*---------------------------------------------------------------------------*/
 /**
  * @brief USART Transmission Complete Interrupt Enable
- * 
+ *
  * @param[in] usart unsigned 32 bit. USART block register address base @ref
 usart_reg_base
  */
 
-void usart_enable_tx_complete_interrupt(uint32_t usart)
-{
-	USART_CR1(usart) |= USART_CR1_TCIE;
+void usart_enable_tx_complete_interrupt(uint32_t usart) {
+  USART_CR1(usart) |= USART_CR1_TCIE;
 }
 
 /*---------------------------------------------------------------------------*/
 /**
  * @brief USART Transmission Complete Interrupt Disable
- * 
+ *
  * @param[in] usart unsigned 32 bit. USART block register address base @ref
 usart_reg_base
  */
 
-void usart_disable_tx_complete_interrupt(uint32_t usart)
-{
-	USART_CR1(usart) &= ~USART_CR1_TCIE;
+void usart_disable_tx_complete_interrupt(uint32_t usart) {
+  USART_CR1(usart) &= ~USART_CR1_TCIE;
 }
 
 /** @brief USART Idle Interrupt Enable.
@@ -382,9 +372,8 @@ void usart_disable_tx_complete_interrupt(uint32_t usart)
 usart_reg_base
 */
 
-void usart_enable_idle_interrupt(uint32_t usart)
-{
-	USART_CR1(usart) |= USART_CR1_IDLEIE;
+void usart_enable_idle_interrupt(uint32_t usart) {
+  USART_CR1(usart) |= USART_CR1_IDLEIE;
 }
 
 /*---------------------------------------------------------------------------*/
@@ -394,9 +383,8 @@ void usart_enable_idle_interrupt(uint32_t usart)
 usart_reg_base
 */
 
-void usart_disable_idle_interrupt(uint32_t usart)
-{
-	USART_CR1(usart) &= ~USART_CR1_IDLEIE;
+void usart_disable_idle_interrupt(uint32_t usart) {
+  USART_CR1(usart) &= ~USART_CR1_IDLEIE;
 }
 
 /*---------------------------------------------------------------------------*/
@@ -406,9 +394,8 @@ void usart_disable_idle_interrupt(uint32_t usart)
 usart_reg_base
 */
 
-void usart_enable_error_interrupt(uint32_t usart)
-{
-	USART_CR3(usart) |= USART_CR3_EIE;
+void usart_enable_error_interrupt(uint32_t usart) {
+  USART_CR3(usart) |= USART_CR3_EIE;
 }
 
 /*---------------------------------------------------------------------------*/
@@ -418,10 +405,8 @@ void usart_enable_error_interrupt(uint32_t usart)
 usart_reg_base
 */
 
-void usart_disable_error_interrupt(uint32_t usart)
-{
-	USART_CR3(usart) &= ~USART_CR3_EIE;
+void usart_disable_error_interrupt(uint32_t usart) {
+  USART_CR3(usart) &= ~USART_CR3_EIE;
 }
 
 /**@}*/
-

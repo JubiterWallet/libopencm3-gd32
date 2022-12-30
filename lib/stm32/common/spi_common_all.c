@@ -20,12 +20,11 @@ used at the same time on the same peripheral.
 Example: Clk/4, positive clock polarity, leading edge trigger, 8-bit words,
 LSB first.
 @code
-	spi_init_master(SPI1, SPI_CR1_BAUDRATE_FPCLK_DIV_4, SPI_CR1_CPOL_CLK_TO_0_WHEN_IDLE,
-			SPI_CR1_CPHA_CLK_TRANSITION_1, SPI_CR1_DFF_8BIT, SPI_CR1_LSBFIRST);
-	spi_write(SPI1, 0x55);		// 8-bit write
-	spi_write(SPI1, 0xaa88);	// 16-bit write
-	reg8 = spi_read(SPI1);		// 8-bit read
-	reg16 = spi_read(SPI1);		// 16-bit read
+        spi_init_master(SPI1, SPI_CR1_BAUDRATE_FPCLK_DIV_4,
+SPI_CR1_CPOL_CLK_TO_0_WHEN_IDLE, SPI_CR1_CPHA_CLK_TRANSITION_1,
+SPI_CR1_DFF_8BIT, SPI_CR1_LSBFIRST); spi_write(SPI1, 0x55);		// 8-bit
+write spi_write(SPI1, 0xaa88);	// 16-bit write reg8 = spi_read(SPI1);
+// 8-bit read reg16 = spi_read(SPI1);		// 16-bit read
 @endcode
 
 @todo need additional functions to aid ISRs in retrieving status
@@ -66,41 +65,41 @@ the reset condition. The reset is effected via the RCC peripheral reset system.
 spi_reg_base.
 */
 
-void spi_reset(uint32_t spi_peripheral)
-{	switch (spi_peripheral) {
+void spi_reset(uint32_t spi_peripheral) {
+  switch (spi_peripheral) {
 #if defined(SPI1_BASE)
-	case SPI1_BASE:
-		rcc_periph_reset_pulse(RST_SPI1);
-		break;
+    case SPI1_BASE:
+      rcc_periph_reset_pulse(RST_SPI1);
+      break;
 #endif
 #if defined(SPI2_BASE)
-	case SPI2_BASE:
-		rcc_periph_reset_pulse(RST_SPI2);
-		break;
+    case SPI2_BASE:
+      rcc_periph_reset_pulse(RST_SPI2);
+      break;
 #endif
 #if defined(SPI3_BASE)
-	case SPI3_BASE:
-		rcc_periph_reset_pulse(RST_SPI3);
-		break;
+    case SPI3_BASE:
+      rcc_periph_reset_pulse(RST_SPI3);
+      break;
 #endif
 #if defined(SPI4_BASE)
-	case SPI4_BASE:
-		rcc_periph_reset_pulse(RST_SPI4);
-		break;
+    case SPI4_BASE:
+      rcc_periph_reset_pulse(RST_SPI4);
+      break;
 #endif
 #if defined(SPI5_BASE)
-	case SPI5_BASE:
-		rcc_periph_reset_pulse(RST_SPI5);
-		break;
+    case SPI5_BASE:
+      rcc_periph_reset_pulse(RST_SPI5);
+      break;
 #endif
 #if defined(SPI6_BASE)
-	case SPI6_BASE:
-		rcc_periph_reset_pulse(RST_SPI6);
-		break;
+    case SPI6_BASE:
+      rcc_periph_reset_pulse(RST_SPI6);
+      break;
 #endif
-	default:
-		break;
-	}
+    default:
+      break;
+  }
 }
 
 /* TODO: Error handling? */
@@ -114,10 +113,7 @@ The SPI peripheral is enabled.
 @param[in] spi Unsigned int32. SPI peripheral identifier @ref spi_reg_base.
 */
 
-void spi_enable(uint32_t spi)
-{
-	SPI_CR1(spi) |= SPI_CR1_SPE; /* Enable SPI. */
-}
+void spi_enable(uint32_t spi) { SPI_CR1(spi) |= SPI_CR1_SPE; /* Enable SPI. */ }
 
 /* TODO: Error handling? */
 /*---------------------------------------------------------------------------*/
@@ -128,13 +124,12 @@ The SPI peripheral is disabled.
 @param[in] spi Unsigned int32. SPI peripheral identifier @ref spi_reg_base.
 */
 
-void spi_disable(uint32_t spi)
-{
-	uint32_t reg32;
+void spi_disable(uint32_t spi) {
+  uint32_t reg32;
 
-	reg32 = SPI_CR1(spi);
-	reg32 &= ~(SPI_CR1_SPE); /* Disable SPI. */
-	SPI_CR1(spi) = reg32;
+  reg32 = SPI_CR1(spi);
+  reg32 &= ~(SPI_CR1_SPE); /* Disable SPI. */
+  SPI_CR1(spi) = reg32;
 }
 
 /*---------------------------------------------------------------------------*/
@@ -148,22 +143,24 @@ prevents the BSY flag from becoming unreliable.
 @returns data Unsigned int16. 8 or 16 bit data from final read.
 */
 
-uint16_t spi_clean_disable(uint32_t spi)
-{
-	/* Wait to receive last data */
-	while (!(SPI_SR(spi) & SPI_SR_RXNE));
+uint16_t spi_clean_disable(uint32_t spi) {
+  /* Wait to receive last data */
+  while (!(SPI_SR(spi) & SPI_SR_RXNE))
+    ;
 
-	uint16_t data = SPI_DR(spi);
+  uint16_t data = SPI_DR(spi);
 
-	/* Wait to transmit last data */
-	while (!(SPI_SR(spi) & SPI_SR_TXE));
+  /* Wait to transmit last data */
+  while (!(SPI_SR(spi) & SPI_SR_TXE))
+    ;
 
-	/* Wait until not busy */
-	while (SPI_SR(spi) & SPI_SR_BSY);
+  /* Wait until not busy */
+  while (SPI_SR(spi) & SPI_SR_BSY)
+    ;
 
-	SPI_CR1(spi) &= ~SPI_CR1_SPE;
+  SPI_CR1(spi) &= ~SPI_CR1_SPE;
 
-	return data;
+  return data;
 }
 
 /*---------------------------------------------------------------------------*/
@@ -175,10 +172,9 @@ Data is written to the SPI interface.
 @param[in] data Unsigned int16. 8 or 16 bit data to be written.
 */
 
-void spi_write(uint32_t spi, uint16_t data)
-{
-	/* Write data (8 or 16 bits, depending on DFF) into DR. */
-	SPI_DR(spi) = data;
+void spi_write(uint32_t spi, uint16_t data) {
+  /* Write data (8 or 16 bits, depending on DFF) into DR. */
+  SPI_DR(spi) = data;
 }
 
 /*---------------------------------------------------------------------------*/
@@ -191,13 +187,13 @@ finished.
 @param[in] data Unsigned int16. 8 or 16 bit data to be written.
 */
 
-void spi_send(uint32_t spi, uint16_t data)
-{
-	/* Wait for transfer finished. */
-	while (!(SPI_SR(spi) & SPI_SR_TXE));
+void spi_send(uint32_t spi, uint16_t data) {
+  /* Wait for transfer finished. */
+  while (!(SPI_SR(spi) & SPI_SR_TXE))
+    ;
 
-	/* Write data (8 or 16 bits, depending on DFF) into DR. */
-	SPI_DR(spi) = data;
+  /* Write data (8 or 16 bits, depending on DFF) into DR. */
+  SPI_DR(spi) = data;
 }
 
 /*---------------------------------------------------------------------------*/
@@ -209,13 +205,13 @@ Data is read from the SPI interface after the incoming transfer has finished.
 @returns data Unsigned int16. 8 or 16 bit data.
 */
 
-uint16_t spi_read(uint32_t spi)
-{
-	/* Wait for transfer finished. */
-	while (!(SPI_SR(spi) & SPI_SR_RXNE));
+uint16_t spi_read(uint32_t spi) {
+  /* Wait for transfer finished. */
+  while (!(SPI_SR(spi) & SPI_SR_RXNE))
+    ;
 
-	/* Read the data (8 or 16 bits, depending on DFF bit) from DR. */
-	return SPI_DR(spi);
+  /* Read the data (8 or 16 bits, depending on DFF bit) from DR. */
+  return SPI_DR(spi);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -229,15 +225,15 @@ transfer has finished.
 @returns data Unsigned int16. 8 or 16 bit data.
 */
 
-uint16_t spi_xfer(uint32_t spi, uint16_t data)
-{
-	spi_write(spi, data);
+uint16_t spi_xfer(uint32_t spi, uint16_t data) {
+  spi_write(spi, data);
 
-	/* Wait for transfer finished. */
-	while (!(SPI_SR(spi) & SPI_SR_RXNE));
+  /* Wait for transfer finished. */
+  while (!(SPI_SR(spi) & SPI_SR_RXNE))
+    ;
 
-	/* Read the data (8 or 16 bits, depending on DFF bit) from DR. */
-	return SPI_DR(spi);
+  /* Read the data (8 or 16 bits, depending on DFF bit) from DR. */
+  return SPI_DR(spi);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -249,9 +245,8 @@ The SPI peripheral is set for bidirectional transfers in two-wire simplex mode
 @param[in] spi Unsigned int32. SPI peripheral identifier @ref spi_reg_base.
 */
 
-void spi_set_bidirectional_mode(uint32_t spi)
-{
-	SPI_CR1(spi) |= SPI_CR1_BIDIMODE;
+void spi_set_bidirectional_mode(uint32_t spi) {
+  SPI_CR1(spi) |= SPI_CR1_BIDIMODE;
 }
 
 /*---------------------------------------------------------------------------*/
@@ -264,9 +259,8 @@ clock wire and a unidirectional data wire.
 @param[in] spi Unsigned int32. SPI peripheral identifier @ref spi_reg_base.
 */
 
-void spi_set_unidirectional_mode(uint32_t spi)
-{
-	SPI_CR1(spi) &= ~SPI_CR1_BIDIMODE;
+void spi_set_unidirectional_mode(uint32_t spi) {
+  SPI_CR1(spi) &= ~SPI_CR1_BIDIMODE;
 }
 
 /*---------------------------------------------------------------------------*/
@@ -279,10 +273,9 @@ state.
 @param[in] spi Unsigned int32. SPI peripheral identifier @ref spi_reg_base.
 */
 
-void spi_set_bidirectional_receive_only_mode(uint32_t spi)
-{
-	SPI_CR1(spi) |= SPI_CR1_BIDIMODE;
-	SPI_CR1(spi) &= ~SPI_CR1_BIDIOE;
+void spi_set_bidirectional_receive_only_mode(uint32_t spi) {
+  SPI_CR1(spi) |= SPI_CR1_BIDIMODE;
+  SPI_CR1(spi) &= ~SPI_CR1_BIDIOE;
 }
 
 /*---------------------------------------------------------------------------*/
@@ -295,10 +288,9 @@ state.
 @param[in] spi Unsigned int32. SPI peripheral identifier @ref spi_reg_base.
 */
 
-void spi_set_bidirectional_transmit_only_mode(uint32_t spi)
-{
-	SPI_CR1(spi) |= SPI_CR1_BIDIMODE;
-	SPI_CR1(spi) |= SPI_CR1_BIDIOE;
+void spi_set_bidirectional_transmit_only_mode(uint32_t spi) {
+  SPI_CR1(spi) |= SPI_CR1_BIDIMODE;
+  SPI_CR1(spi) |= SPI_CR1_BIDIOE;
 }
 
 /*---------------------------------------------------------------------------*/
@@ -309,10 +301,7 @@ The SPI peripheral is set to use a CRC field for transmit and receive.
 @param[in] spi Unsigned int32. SPI peripheral identifier @ref spi_reg_base.
 */
 
-void spi_enable_crc(uint32_t spi)
-{
-	SPI_CR1(spi) |= SPI_CR1_CRCEN;
-}
+void spi_enable_crc(uint32_t spi) { SPI_CR1(spi) |= SPI_CR1_CRCEN; }
 
 /*---------------------------------------------------------------------------*/
 /** @brief SPI Disable the CRC.
@@ -320,10 +309,7 @@ void spi_enable_crc(uint32_t spi)
 @param[in] spi Unsigned int32. SPI peripheral identifier @ref spi_reg_base.
 */
 
-void spi_disable_crc(uint32_t spi)
-{
-	SPI_CR1(spi) &= ~SPI_CR1_CRCEN;
-}
+void spi_disable_crc(uint32_t spi) { SPI_CR1(spi) &= ~SPI_CR1_CRCEN; }
 
 /*---------------------------------------------------------------------------*/
 /** @brief SPI Next Transmit is a Data Word
@@ -335,9 +321,8 @@ of a data or CRC word.
 @param[in] spi Unsigned int32. SPI peripheral identifier @ref spi_reg_base.
 */
 
-void spi_set_next_tx_from_buffer(uint32_t spi)
-{
-	SPI_CR1(spi) &= ~SPI_CR1_CRCNEXT;
+void spi_set_next_tx_from_buffer(uint32_t spi) {
+  SPI_CR1(spi) &= ~SPI_CR1_CRCNEXT;
 }
 
 /*---------------------------------------------------------------------------*/
@@ -350,10 +335,7 @@ of a data or CRC word.
 @param[in] spi Unsigned int32. SPI peripheral identifier @ref spi_reg_base.
 */
 
-void spi_set_next_tx_from_crc(uint32_t spi)
-{
-	SPI_CR1(spi) |= SPI_CR1_CRCNEXT;
-}
+void spi_set_next_tx_from_crc(uint32_t spi) { SPI_CR1(spi) |= SPI_CR1_CRCNEXT; }
 
 /*---------------------------------------------------------------------------*/
 /** @brief SPI Set Full Duplex (3-wire) Mode
@@ -361,10 +343,7 @@ void spi_set_next_tx_from_crc(uint32_t spi)
 @param[in] spi Unsigned int32. SPI peripheral identifier @ref spi_reg_base.
 */
 
-void spi_set_full_duplex_mode(uint32_t spi)
-{
-	SPI_CR1(spi) &= ~SPI_CR1_RXONLY;
-}
+void spi_set_full_duplex_mode(uint32_t spi) { SPI_CR1(spi) &= ~SPI_CR1_RXONLY; }
 
 /*---------------------------------------------------------------------------*/
 /** @brief SPI Set Receive Only Mode for Simplex (2-wire) Unidirectional
@@ -373,10 +352,7 @@ Transfers
 @param[in] spi Unsigned int32. SPI peripheral identifier @ref spi_reg_base.
 */
 
-void spi_set_receive_only_mode(uint32_t spi)
-{
-	SPI_CR1(spi) |= SPI_CR1_RXONLY;
-}
+void spi_set_receive_only_mode(uint32_t spi) { SPI_CR1(spi) |= SPI_CR1_RXONLY; }
 
 /*---------------------------------------------------------------------------*/
 /** @brief SPI Disable Slave Management by Hardware
@@ -386,9 +362,8 @@ In slave mode the NSS hardware input is used as a select enable for the slave.
 @param[in] spi Unsigned int32. SPI peripheral identifier @ref spi_reg_base.
 */
 
-void spi_disable_software_slave_management(uint32_t spi)
-{
-	SPI_CR1(spi) &= ~SPI_CR1_SSM;
+void spi_disable_software_slave_management(uint32_t spi) {
+  SPI_CR1(spi) &= ~SPI_CR1_SSM;
 }
 
 /*---------------------------------------------------------------------------*/
@@ -400,11 +375,10 @@ enable/disable of the slave (@ref spi_set_nss_high).
 @param[in] spi Unsigned int32. SPI peripheral identifier @ref spi_reg_base.
 */
 
-void spi_enable_software_slave_management(uint32_t spi)
-{
-	SPI_CR1(spi) |= SPI_CR1_SSM;
-	/* allow slave select to be an input */
-	SPI_CR2(spi) &= ~SPI_CR2_SSOE;
+void spi_enable_software_slave_management(uint32_t spi) {
+  SPI_CR1(spi) |= SPI_CR1_SSM;
+  /* allow slave select to be an input */
+  SPI_CR2(spi) &= ~SPI_CR2_SSOE;
 }
 
 /*---------------------------------------------------------------------------*/
@@ -419,10 +393,7 @@ otherwise
 @param[in] spi Unsigned int32. SPI peripheral identifier @ref spi_reg_base.
 */
 
-void spi_set_nss_high(uint32_t spi)
-{
-	SPI_CR1(spi) |= SPI_CR1_SSI;
-}
+void spi_set_nss_high(uint32_t spi) { SPI_CR1(spi) |= SPI_CR1_SSI; }
 
 /*---------------------------------------------------------------------------*/
 /** @brief SPI Set the Software NSS Signal Low
@@ -433,10 +404,7 @@ the NSS signal with a slave select disable signal.
 @param[in] spi Unsigned int32. SPI peripheral identifier @ref spi_reg_base.
 */
 
-void spi_set_nss_low(uint32_t spi)
-{
-	SPI_CR1(spi) &= ~SPI_CR1_SSI;
-}
+void spi_set_nss_low(uint32_t spi) { SPI_CR1(spi) &= ~SPI_CR1_SSI; }
 
 /*---------------------------------------------------------------------------*/
 /** @brief SPI Set to Send LSB First
@@ -444,10 +412,7 @@ void spi_set_nss_low(uint32_t spi)
 @param[in] spi Unsigned int32. SPI peripheral identifier @ref spi_reg_base.
 */
 
-void spi_send_lsb_first(uint32_t spi)
-{
-	SPI_CR1(spi) |= SPI_CR1_LSBFIRST;
-}
+void spi_send_lsb_first(uint32_t spi) { SPI_CR1(spi) |= SPI_CR1_LSBFIRST; }
 
 /*---------------------------------------------------------------------------*/
 /** @brief SPI Set to Send MSB First
@@ -455,10 +420,7 @@ void spi_send_lsb_first(uint32_t spi)
 @param[in] spi Unsigned int32. SPI peripheral identifier @ref spi_reg_base.
 */
 
-void spi_send_msb_first(uint32_t spi)
-{
-	SPI_CR1(spi) &= ~SPI_CR1_LSBFIRST;
-}
+void spi_send_msb_first(uint32_t spi) { SPI_CR1(spi) &= ~SPI_CR1_LSBFIRST; }
 
 /*---------------------------------------------------------------------------*/
 /** @brief SPI Set the Baudrate Prescaler
@@ -470,17 +432,16 @@ values?
 @param[in] baudrate Unsigned int8. Baudrate prescale value @ref spi_br_pre.
 */
 
-void spi_set_baudrate_prescaler(uint32_t spi, uint8_t baudrate)
-{
-	uint32_t reg32;
+void spi_set_baudrate_prescaler(uint32_t spi, uint8_t baudrate) {
+  uint32_t reg32;
 
-	if (baudrate > 7) {
-		return;
-	}
+  if (baudrate > 7) {
+    return;
+  }
 
-	reg32 = (SPI_CR1(spi) & 0xffc7); /* Clear bits [5:3]. */
-	reg32 |= (baudrate << 3);
-	SPI_CR1(spi) = reg32;
+  reg32 = (SPI_CR1(spi) & 0xffc7); /* Clear bits [5:3]. */
+  reg32 |= (baudrate << 3);
+  SPI_CR1(spi) = reg32;
 }
 
 /*---------------------------------------------------------------------------*/
@@ -489,10 +450,7 @@ void spi_set_baudrate_prescaler(uint32_t spi, uint8_t baudrate)
 @param[in] spi Unsigned int32. SPI peripheral identifier @ref spi_reg_base.
 */
 
-void spi_set_master_mode(uint32_t spi)
-{
-	SPI_CR1(spi) |= SPI_CR1_MSTR;
-}
+void spi_set_master_mode(uint32_t spi) { SPI_CR1(spi) |= SPI_CR1_MSTR; }
 
 /*---------------------------------------------------------------------------*/
 /** @brief SPI Set to Slave Mode
@@ -500,10 +458,7 @@ void spi_set_master_mode(uint32_t spi)
 @param[in] spi Unsigned int32. SPI peripheral identifier @ref spi_reg_base.
 */
 
-void spi_set_slave_mode(uint32_t spi)
-{
-	SPI_CR1(spi) &= ~SPI_CR1_MSTR;
-}
+void spi_set_slave_mode(uint32_t spi) { SPI_CR1(spi) &= ~SPI_CR1_MSTR; }
 
 /*---------------------------------------------------------------------------*/
 /** @brief SPI Set the Clock Polarity to High when Idle
@@ -512,10 +467,7 @@ void spi_set_slave_mode(uint32_t spi)
 @sa spi_set_clock_polarity_0
 */
 
-void spi_set_clock_polarity_1(uint32_t spi)
-{
-	SPI_CR1(spi) |= SPI_CR1_CPOL;
-}
+void spi_set_clock_polarity_1(uint32_t spi) { SPI_CR1(spi) |= SPI_CR1_CPOL; }
 
 /*---------------------------------------------------------------------------*/
 /** @brief SPI Set the Clock Polarity to Low when Idle
@@ -524,10 +476,7 @@ void spi_set_clock_polarity_1(uint32_t spi)
 @sa spi_set_clock_polarity_1
 */
 
-void spi_set_clock_polarity_0(uint32_t spi)
-{
-	SPI_CR1(spi) &= ~SPI_CR1_CPOL;
-}
+void spi_set_clock_polarity_0(uint32_t spi) { SPI_CR1(spi) &= ~SPI_CR1_CPOL; }
 
 /*---------------------------------------------------------------------------*/
 /** @brief SPI Set the Clock Phase to Capture on Trailing Edge
@@ -536,10 +485,7 @@ void spi_set_clock_polarity_0(uint32_t spi)
 @sa spi_set_clock_phase_0
 */
 
-void spi_set_clock_phase_1(uint32_t spi)
-{
-	SPI_CR1(spi) |= SPI_CR1_CPHA;
-}
+void spi_set_clock_phase_1(uint32_t spi) { SPI_CR1(spi) |= SPI_CR1_CPHA; }
 
 /*---------------------------------------------------------------------------*/
 /** @brief SPI Set the Clock Phase to Capture on Leading Edge
@@ -548,10 +494,7 @@ void spi_set_clock_phase_1(uint32_t spi)
 @sa spi_set_clock_phase_1
 */
 
-void spi_set_clock_phase_0(uint32_t spi)
-{
-	SPI_CR1(spi) &= ~SPI_CR1_CPHA;
-}
+void spi_set_clock_phase_0(uint32_t spi) { SPI_CR1(spi) &= ~SPI_CR1_CPHA; }
 
 /*---------------------------------------------------------------------------*/
 /** @brief SPI Enable the Transmit Buffer Empty Interrupt
@@ -559,9 +502,8 @@ void spi_set_clock_phase_0(uint32_t spi)
 @param[in] spi Unsigned int32. SPI peripheral identifier @ref spi_reg_base.
 */
 
-void spi_enable_tx_buffer_empty_interrupt(uint32_t spi)
-{
-	SPI_CR2(spi) |= SPI_CR2_TXEIE;
+void spi_enable_tx_buffer_empty_interrupt(uint32_t spi) {
+  SPI_CR2(spi) |= SPI_CR2_TXEIE;
 }
 
 /*---------------------------------------------------------------------------*/
@@ -570,9 +512,8 @@ void spi_enable_tx_buffer_empty_interrupt(uint32_t spi)
 @param[in] spi Unsigned int32. SPI peripheral identifier @ref spi_reg_base.
 */
 
-void spi_disable_tx_buffer_empty_interrupt(uint32_t spi)
-{
-	SPI_CR2(spi) &= ~SPI_CR2_TXEIE;
+void spi_disable_tx_buffer_empty_interrupt(uint32_t spi) {
+  SPI_CR2(spi) &= ~SPI_CR2_TXEIE;
 }
 
 /*---------------------------------------------------------------------------*/
@@ -581,9 +522,8 @@ void spi_disable_tx_buffer_empty_interrupt(uint32_t spi)
 @param[in] spi Unsigned int32. SPI peripheral identifier @ref spi_reg_base.
 */
 
-void spi_enable_rx_buffer_not_empty_interrupt(uint32_t spi)
-{
-	SPI_CR2(spi) |= SPI_CR2_RXNEIE;
+void spi_enable_rx_buffer_not_empty_interrupt(uint32_t spi) {
+  SPI_CR2(spi) |= SPI_CR2_RXNEIE;
 }
 
 /*---------------------------------------------------------------------------*/
@@ -592,9 +532,8 @@ void spi_enable_rx_buffer_not_empty_interrupt(uint32_t spi)
 @param[in] spi Unsigned int32. SPI peripheral identifier @ref spi_reg_base.
 */
 
-void spi_disable_rx_buffer_not_empty_interrupt(uint32_t spi)
-{
-	SPI_CR2(spi) &= ~SPI_CR2_RXNEIE;
+void spi_disable_rx_buffer_not_empty_interrupt(uint32_t spi) {
+  SPI_CR2(spi) &= ~SPI_CR2_RXNEIE;
 }
 
 /*---------------------------------------------------------------------------*/
@@ -603,10 +542,7 @@ void spi_disable_rx_buffer_not_empty_interrupt(uint32_t spi)
 @param[in] spi Unsigned int32. SPI peripheral identifier @ref spi_reg_base.
 */
 
-void spi_enable_error_interrupt(uint32_t spi)
-{
-	SPI_CR2(spi) |= SPI_CR2_ERRIE;
-}
+void spi_enable_error_interrupt(uint32_t spi) { SPI_CR2(spi) |= SPI_CR2_ERRIE; }
 
 /*---------------------------------------------------------------------------*/
 /** @brief SPI Disable the Error Interrupt
@@ -614,9 +550,8 @@ void spi_enable_error_interrupt(uint32_t spi)
 @param[in] spi Unsigned int32. SPI peripheral identifier @ref spi_reg_base.
 */
 
-void spi_disable_error_interrupt(uint32_t spi)
-{
-	SPI_CR2(spi) &= ~SPI_CR2_ERRIE;
+void spi_disable_error_interrupt(uint32_t spi) {
+  SPI_CR2(spi) &= ~SPI_CR2_ERRIE;
 }
 
 /*---------------------------------------------------------------------------*/
@@ -628,10 +563,7 @@ SPI bus into slave mode. Multimaster mode is not possible.
 @param[in] spi Unsigned int32. SPI peripheral identifier @ref spi_reg_base.
 */
 
-void spi_enable_ss_output(uint32_t spi)
-{
-	SPI_CR2(spi) |= SPI_CR2_SSOE;
-}
+void spi_enable_ss_output(uint32_t spi) { SPI_CR2(spi) |= SPI_CR2_SSOE; }
 
 /*---------------------------------------------------------------------------*/
 /** @brief SPI Set the NSS Pin as an Input
@@ -643,10 +575,7 @@ becomes a slave enable.
 @param[in] spi Unsigned int32. SPI peripheral identifier @ref spi_reg_base.
 */
 
-void spi_disable_ss_output(uint32_t spi)
-{
-	SPI_CR2(spi) &= ~SPI_CR2_SSOE;
-}
+void spi_disable_ss_output(uint32_t spi) { SPI_CR2(spi) &= ~SPI_CR2_SSOE; }
 
 /*---------------------------------------------------------------------------*/
 /** @brief SPI Enable Transmit Transfers via DMA
@@ -658,10 +587,7 @@ SPI peripheral are given in the Technical Manual DMA section.
 @param[in] spi Unsigned int32. SPI peripheral identifier @ref spi_reg_base.
 */
 
-void spi_enable_tx_dma(uint32_t spi)
-{
-	SPI_CR2(spi) |= SPI_CR2_TXDMAEN;
-}
+void spi_enable_tx_dma(uint32_t spi) { SPI_CR2(spi) |= SPI_CR2_TXDMAEN; }
 
 /*---------------------------------------------------------------------------*/
 /** @brief SPI Disable Transmit Transfers via DMA
@@ -669,10 +595,7 @@ void spi_enable_tx_dma(uint32_t spi)
 @param[in] spi Unsigned int32. SPI peripheral identifier @ref spi_reg_base.
 */
 
-void spi_disable_tx_dma(uint32_t spi)
-{
-	SPI_CR2(spi) &= ~SPI_CR2_TXDMAEN;
-}
+void spi_disable_tx_dma(uint32_t spi) { SPI_CR2(spi) &= ~SPI_CR2_TXDMAEN; }
 
 /*---------------------------------------------------------------------------*/
 /** @brief SPI Enable Receive Transfers via DMA
@@ -684,10 +607,7 @@ for each SPI peripheral are given in the Technical Manual DMA section.
 @param[in] spi Unsigned int32. SPI peripheral identifier @ref spi_reg_base.
 */
 
-void spi_enable_rx_dma(uint32_t spi)
-{
-	SPI_CR2(spi) |= SPI_CR2_RXDMAEN;
-}
+void spi_enable_rx_dma(uint32_t spi) { SPI_CR2(spi) |= SPI_CR2_RXDMAEN; }
 
 /*---------------------------------------------------------------------------*/
 /** @brief SPI Disable Receive Transfers via DMA
@@ -695,10 +615,7 @@ void spi_enable_rx_dma(uint32_t spi)
 @param[in] spi Unsigned int32. SPI peripheral identifier @ref spi_reg_base.
 */
 
-void spi_disable_rx_dma(uint32_t spi)
-{
-	SPI_CR2(spi) &= ~SPI_CR2_RXDMAEN;
-}
+void spi_disable_rx_dma(uint32_t spi) { SPI_CR2(spi) &= ~SPI_CR2_RXDMAEN; }
 
 /*---------------------------------------------------------------------------*/
 /** @brief SPI Standard Mode selection
@@ -715,14 +632,13 @@ Mode | CPOL | CPHA
 @sa spi_set_clock_polarity_0 spi_set_clock_polarity_1
 */
 
-void spi_set_standard_mode(uint32_t spi, uint8_t mode)
-{
-	if (mode > 3) {
-		return;
-	}
+void spi_set_standard_mode(uint32_t spi, uint8_t mode) {
+  if (mode > 3) {
+    return;
+  }
 
-	uint32_t reg32 = SPI_CR1(spi) & ~(SPI_CR1_CPOL | SPI_CR1_CPHA);
-	SPI_CR1(spi) = reg32 | mode;
+  uint32_t reg32 = SPI_CR1(spi) & ~(SPI_CR1_CPOL | SPI_CR1_CPHA);
+  SPI_CR1(spi) = reg32 | mode;
 }
 
 /**@}*/

@@ -21,12 +21,11 @@ used at the same time on the same peripheral.
 Example: Clk/4, positive clock polarity, leading edge trigger, 8-bit words,
 LSB first.
 @code
-	spi_init_master(SPI1, SPI_CR1_BAUDRATE_FPCLK_DIV_4, SPI_CR1_CPOL_CLK_TO_0_WHEN_IDLE,
-			SPI_CR1_CPHA_CLK_TRANSITION_1, SPI_CR1_DFF_8BIT, SPI_CR1_LSBFIRST);
-	spi_write(SPI1, 0x55);		// 8-bit write
-	spi_write(SPI1, 0xaa88);	// 16-bit write
-	reg8 = spi_read(SPI1);		// 8-bit read
-	reg16 = spi_read(SPI1);		// 16-bit read
+        spi_init_master(SPI1, SPI_CR1_BAUDRATE_FPCLK_DIV_4,
+SPI_CR1_CPOL_CLK_TO_0_WHEN_IDLE, SPI_CR1_CPHA_CLK_TRANSITION_1,
+SPI_CR1_DFF_8BIT, SPI_CR1_LSBFIRST); spi_write(SPI1, 0x55);		// 8-bit
+write spi_write(SPI1, 0xaa88);	// 16-bit write reg8 = spi_read(SPI1);
+// 8-bit read reg16 = spi_read(SPI1);		// 16-bit read
 @endcode
 
 @todo need additional functions to aid ISRs in retrieving status
@@ -55,7 +54,6 @@ LSB first.
 #include <libopencm3/stm32/spi.h>
 #include <libopencm3/stm32/rcc.h>
 
-
 /**@{*/
 
 /*---------------------------------------------------------------------------*/
@@ -81,25 +79,23 @@ spi_lsbfirst.
 */
 
 int spi_init_master(uint32_t spi, uint32_t br, uint32_t cpol, uint32_t cpha,
-		    uint32_t dff, uint32_t lsbfirst)
-{
-	uint32_t reg32 = SPI_CR1(spi);
+                    uint32_t dff, uint32_t lsbfirst) {
+  uint32_t reg32 = SPI_CR1(spi);
+  /* Reset all bits omitting SPE, CRCEN and CRCNEXT bits. */
+  reg32 &= SPI_CR1_SPE | SPI_CR1_CRCEN | SPI_CR1_CRCNEXT;
 
-	/* Reset all bits omitting SPE, CRCEN and CRCNEXT bits. */
-	reg32 &= SPI_CR1_SPE | SPI_CR1_CRCEN | SPI_CR1_CRCNEXT;
+  reg32 |= SPI_CR1_MSTR; /* Configure SPI as master. */
 
-	reg32 |= SPI_CR1_MSTR;	/* Configure SPI as master. */
+  reg32 |= br;       /* Set baud rate bits. */
+  reg32 |= cpol;     /* Set CPOL value. */
+  reg32 |= cpha;     /* Set CPHA value. */
+  reg32 |= dff;      /* Set data format (8 or 16 bits). */
+  reg32 |= lsbfirst; /* Set frame format (LSB- or MSB-first). */
 
-	reg32 |= br;		/* Set baud rate bits. */
-	reg32 |= cpol;		/* Set CPOL value. */
-	reg32 |= cpha;		/* Set CPHA value. */
-	reg32 |= dff;		/* Set data format (8 or 16 bits). */
-	reg32 |= lsbfirst;	/* Set frame format (LSB- or MSB-first). */
+  SPI_CR2(spi) |= SPI_CR2_SSOE; /* common case */
+  SPI_CR1(spi) = reg32;
 
-	SPI_CR2(spi) |= SPI_CR2_SSOE; /* common case */
-	SPI_CR1(spi) = reg32;
-
-	return 0;
+  return 0;
 }
 
 /*---------------------------------------------------------------------------*/
@@ -108,10 +104,7 @@ int spi_init_master(uint32_t spi, uint32_t br, uint32_t cpol, uint32_t cpha,
 @param[in] spi Unsigned int32. SPI peripheral identifier @ref spi_reg_base.
 */
 
-void spi_set_dff_8bit(uint32_t spi)
-{
-	SPI_CR1(spi) &= ~SPI_CR1_DFF;
-}
+void spi_set_dff_8bit(uint32_t spi) { SPI_CR1(spi) &= ~SPI_CR1_DFF; }
 
 /*---------------------------------------------------------------------------*/
 /** @brief SPI Set Data Frame Format to 16 bits
@@ -119,9 +112,6 @@ void spi_set_dff_8bit(uint32_t spi)
 @param[in] spi Unsigned int32. SPI peripheral identifier @ref spi_reg_base.
 */
 
-void spi_set_dff_16bit(uint32_t spi)
-{
-	SPI_CR1(spi) |= SPI_CR1_DFF;
-}
+void spi_set_dff_16bit(uint32_t spi) { SPI_CR1(spi) |= SPI_CR1_DFF; }
 
 /**@}*/
