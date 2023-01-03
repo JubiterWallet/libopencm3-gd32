@@ -367,9 +367,9 @@ void usart_word_length_set(uint32_t usart_periph, uint32_t wlen);
 /* configure usart stop bit length */
 void usart_stop_bit_set(uint32_t usart_periph, uint32_t stblen);
 /* enable usart */
-void usart_enable(uint32_t usart_periph);
+void usart_enable_GD(uint32_t usart_periph);
 /* disable usart */
-void usart_disable(uint32_t usart_periph);
+void usart_disable_GD(uint32_t usart_periph);
 /* configure USART transmitter */
 void usart_transmit_config(uint32_t usart_periph, uint32_t txconfig);
 /* configure USART receiver */

@@ -204,7 +204,7 @@ void usart_stop_bit_set(uint32_t usart_periph, uint32_t stblen)
     \param[out] none
     \retval     none
 */
-void usart_enable(uint32_t usart_periph)
+void usart_enable_GD(uint32_t usart_periph)
 {
     USART_CTL0(usart_periph) |= USART_CTL0_UEN;
 }
@@ -215,7 +215,7 @@ void usart_enable(uint32_t usart_periph)
     \param[out] none
     \retval     none
 */
-void usart_disable(uint32_t usart_periph)
+void usart_disable_GD(uint32_t usart_periph)
 {
     USART_CTL0(usart_periph) &= ~(USART_CTL0_UEN);
 }

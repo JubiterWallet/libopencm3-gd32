@@ -252,7 +252,7 @@ void gpio_bit_write(uint32_t gpio_periph, uint32_t pin, bit_status bit_value)
     \param[out] none
     \retval     none
 */
-void gpio_port_write(uint32_t gpio_periph, uint16_t data)
+void gpio_port_write_GD(uint32_t gpio_periph, uint16_t data)
 {
     GPIO_OCTL(gpio_periph) = (uint32_t)data;
 }

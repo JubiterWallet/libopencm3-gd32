@@ -26,6 +26,7 @@ OBJS += gd32f4xx_exti.o gd32f4xx_fwdgt.o gd32f4xx_gpio.o gd32f4xx_i2c.o gd32f4xx
 OBJS += gd32f4xx_iref.o gd32f4xx_misc.o gd32f4xx_pmu.o gd32f4xx_rcu.o gd32f4xx_rtc.o
 OBJS += gd32f4xx_sdio.o gd32f4xx_spi.o gd32f4xx_syscfg.o gd32f4xx_timer.o gd32f4xx_tli.o
 OBJS += gd32f4xx_trng.o gd32f4xx_usart.o gd32f4xx_wwdgt.o
+OBJS += system_gd32f4xx.o
 
 
 # stm32_libs
@@ -58,6 +59,6 @@ OBJS += usart_common_all.o usart_common_f124.o
 OBJS += quadspi_common_v1.o
 
 
-VPATH += ../:../../cm3:./common:./GD32F4xx_standard_peripheral/Source
+VPATH += ../:../../cm3:./common:./GD32F4xx_standard_peripheral/Source:./CMSIS/GD/GD32F4xx/Source
 
 include ../../Makefile.include
