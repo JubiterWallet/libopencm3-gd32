@@ -288,9 +288,9 @@ void spi_struct_para_init(spi_parameter_struct *spi_struct);
 /* initialize SPI parameter */
 void spi_init(uint32_t spi_periph, spi_parameter_struct *spi_struct);
 /* enable SPI */
-void spi_enable(uint32_t spi_periph);
+void spi_enable_GD(uint32_t spi_periph);
 /* disable SPI */
-void spi_disable(uint32_t spi_periph);
+void spi_disable_GD(uint32_t spi_periph);
 
 /* initialize I2S parameter */
 void i2s_init(uint32_t spi_periph, uint32_t i2s_mode, uint32_t i2s_standard, uint32_t i2s_ckpl);

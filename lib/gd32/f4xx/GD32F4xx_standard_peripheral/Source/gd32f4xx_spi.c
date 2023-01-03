@@ -158,7 +158,7 @@ void spi_init(uint32_t spi_periph, spi_parameter_struct *spi_struct)
     \param[out] none
     \retval     none
 */
-void spi_enable(uint32_t spi_periph)
+void spi_enable_GD(uint32_t spi_periph)
 {
     SPI_CTL0(spi_periph) |= (uint32_t)SPI_CTL0_SPIEN;
 }
@@ -169,7 +169,7 @@ void spi_enable(uint32_t spi_periph)
     \param[out] none
     \retval     none
 */
-void spi_disable(uint32_t spi_periph)
+void spi_disable_GD(uint32_t spi_periph)
 {
     SPI_CTL0(spi_periph) &= (uint32_t)(~SPI_CTL0_SPIEN);
 }
