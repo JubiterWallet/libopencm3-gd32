@@ -39,7 +39,7 @@ OBJS += dma_common_f24.o
 OBJS += dma2d_common_f47.o
 OBJS += dsi_common_f47.o
 OBJS += exti_common_all.o
-OBJS += flash_common_all.o flash_common_f.o flash_common_f24.o
+OBJS += flash.o flash_common_all.o flash_common_f.o flash_common_f24.o
 OBJS += flash_common_idcache.o
 OBJS += fmc_common_f47.o
 OBJS += gpio_common_all.o gpio_common_f0234.o
@@ -48,16 +48,22 @@ OBJS += i2c_common_v1.o
 OBJS += iwdg_common_all.o
 OBJS += lptimer_common_all.o
 OBJS += ltdc_common_f47.o
-OBJS += pwr_common_v1.o
-OBJS += rcc_common_all.o
+OBJS += pwr_common_v1.o pwr.o
+OBJS += rcc_common_all.o rcc.o
 OBJS += rng_common_v1.o
-OBJS += rtc_common_l1f024.o
+OBJS += rtc_common_l1f024.o rtc.o
 OBJS += spi_common_all.o spi_common_v1.o spi_common_v1_frf.o
 OBJS += timer_common_all.o timer_common_f0234.o timer_common_f24.o
 OBJS += usart_common_all.o usart_common_f124.o
 OBJS += quadspi_common_v1.o
 
+# usb related
+OBJS += usb.o usb_standard.o usb_control.o usb_msc.o
+OBJS += usb_hid.o
+OBJS += usb_audio.o usb_cdc.o usb_midi.o
+OBJS += usb_dwc_common.o usb_f107.o usb_gd32f470.o
 
-VPATH += ../:../../cm3:./common:./GD32F4xx_standard_peripheral/Source:./CMSIS/GD/GD32F4xx/Source
+
+VPATH += ../:../../cm3:../../usb:./common:./GD32F4xx_standard_peripheral/Source:./CMSIS/GD/GD32F4xx/Source
 
 include ../../Makefile.include
