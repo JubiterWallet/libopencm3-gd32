@@ -56,11 +56,7 @@ extern const usbd_driver stm32f107_usb_driver;
 extern const usbd_driver stm32f207_usb_driver;
 extern const usbd_driver gd32f470_usb_driver;
 extern const usbd_driver st_usbfs_v2_usb_driver;
-#ifdef GD32F470
-#define otgfs_usb_driver gd32f470_usb_driver
-#else
 #define otgfs_usb_driver stm32f107_usb_driver
-#endif
 #define otghs_usb_driver stm32f207_usb_driver
 extern const usbd_driver efm32lg_usb_driver;
 extern const usbd_driver efm32hg_usb_driver;

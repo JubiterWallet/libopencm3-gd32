@@ -33,10 +33,8 @@ Devices can have up to 3 USARTs and 2 UARTs.
 
 #include <libopencm3/stm32/usart.h>
 #include <libopencm3/stm32/rcc.h>
-
-#if GD32F470
 #include "gd32f4xx.h"
-#endif
+
 
 /*---------------------------------------------------------------------------*/
 /** @brief USART Set Baudrate.

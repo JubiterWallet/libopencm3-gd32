@@ -38,9 +38,8 @@ register access, Error conditions
 
 #include <libopencm3/stm32/i2c.h>
 #include <libopencm3/stm32/rcc.h>
-#if GD32F470
 #include "gd32f4xx.h"
-#endif
+
 /**@{*/
 
 /*---------------------------------------------------------------------------*/
