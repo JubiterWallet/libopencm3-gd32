@@ -25,7 +25,7 @@ OBJS += gd32f4xx_dbg.o gd32f4xx_dci.o gd32f4xx_dma.o gd32f4xx_enet.o gd32f4xx_ex
 OBJS += gd32f4xx_exti.o gd32f4xx_fwdgt.o gd32f4xx_gpio.o gd32f4xx_i2c.o gd32f4xx_ipa.o
 OBJS += gd32f4xx_iref.o gd32f4xx_misc.o gd32f4xx_pmu.o gd32f4xx_rcu.o gd32f4xx_rtc.o
 OBJS += gd32f4xx_sdio.o gd32f4xx_spi.o gd32f4xx_syscfg.o gd32f4xx_timer.o gd32f4xx_tli.o
-OBJS += gd32f4xx_trng.o gd32f4xx_usart.o gd32f4xx_wwdgt.o gd32f4xx_fmc.o
+OBJS += gd32f4xx_trng.o gd32f4xx_usart.o gd32f4xx_wwdgt.o gd32f4xx_fmc.o gd32f4xx_mpu.o
 
 
 # stm32_libs
