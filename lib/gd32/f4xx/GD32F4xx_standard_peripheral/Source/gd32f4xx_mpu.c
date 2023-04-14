@@ -25,9 +25,9 @@
 // #define BOOT_FLASH_FORBIDDEN_PERMISSION_ADDRESS \
 //   (0x08007FE0UL)  // 32B never region
 
-#define BOOT_FLASH_FORBIDDEN_PERMISSION_ADDRESS \
-  (0x0800F000UL)  // 32B never region
-#define BOOT_FLASH_FORBIDDEN_PERMISSION_SIZE MPU_REGION_SIZE_32B
+// #define BOOT_FLASH_FORBIDDEN_PERMISSION_ADDRESS \
+//   (0x0800F000UL)  // 32B never region
+// #define BOOT_FLASH_FORBIDDEN_PERMISSION_SIZE MPU_REGION_SIZE_32B
 
 #define BOOT_PERIPH0_BASE_ADDRESS (0x40000000UL)
 #define BOOT_PERIPH0_SIZE MPU_REGION_SIZE_128MB
@@ -59,21 +59,21 @@
 #define FIRM_PERIPH_SYSCFG_SIZE MPU_REGION_SIZE_1KB
 
 //// for test memmanage handler
-//#define TEST0_ARRAY_BASE_ADDRESS           (RAM1_BASE_ADDRESS + RAM1_SIZE +
-// 0x1000) #define TEST0_ARRAY_SIZE                   MPU_REGION_SIZE_32B
+// #define TEST0_ARRAY_BASE_ADDRESS           (RAM1_BASE_ADDRESS + RAM1_SIZE +
+//  0x1000) #define TEST0_ARRAY_SIZE                   MPU_REGION_SIZE_32B
 
-//#define TEST1_ARRAY_BASE_ADDRESS           (FLASH1_BASE_ADDRESS + FLASH1_SIZE
+// #define TEST1_ARRAY_BASE_ADDRESS           (FLASH1_BASE_ADDRESS + FLASH1_SIZE
 //+ 	0x1000) #define TEST1_ARRAY_SIZE                   MPU_REGION_SIZE_32B
 
-//#ifdef __CC_ARM
-// uint8_t PrivilegedReadOnlyArray[32]   __attribute__( ( at( 0x20030000 ) ) );
+// #ifdef __CC_ARM
+//  uint8_t PrivilegedReadOnlyArray[32]   __attribute__( ( at( 0x20030000 ) ) );
 ////uint8_t PrivilegedReadOnlyArray1[32]   __attribute__( ( at( 0x20003000 ) )
 ///);
-//#endif
-//#ifdef __IAR_SYSTEMS_ICC__
+// #endif
+// #ifdef __IAR_SYSTEMS_ICC__
 //__no_init uint8_t PrivilegedReadOnlyArray[32] @0x20002000;
-//#endif
-// uint8_t read_data;
+// #endif
+//  uint8_t read_data;
 
 /*!
     \brief      test core support MPU or not
@@ -216,35 +216,35 @@ void mpu_setup_boot_region(void) {
   mpu_init_struct.instruction_accessable = MPU_INSTRUCTION_ACCESS_ENABLE;
   mpu_region_config(&mpu_init_struct);
 
-  /* configure FLASH forbidden permission region as region 1, 32B */
-  mpu_init_struct.enable = MPU_REGION_ENABLE;
-  mpu_init_struct.base_address = BOOT_FLASH_FORBIDDEN_PERMISSION_ADDRESS;
-  mpu_init_struct.region_size =
-      BOOT_FLASH_FORBIDDEN_PERMISSION_SIZE;  // 0x8007FE0 - 0x08007FFF 32B
-                                             // no-access
-  mpu_init_struct.access_permission = MPU_REGION_PRIV_DISABLE_USER_DISABLE;
-  mpu_init_struct.number = MPU_REGION_NUMBER_1;
-  mpu_region_config(&mpu_init_struct);
+  // /* configure FLASH forbidden permission region as region 1, 32B */
+  // mpu_init_struct.enable = MPU_REGION_ENABLE;
+  // mpu_init_struct.base_address = BOOT_FLASH_FORBIDDEN_PERMISSION_ADDRESS;
+  // mpu_init_struct.region_size =
+  //     BOOT_FLASH_FORBIDDEN_PERMISSION_SIZE;  // 0x8007FE0 - 0x08007FFF 32B
+  //                                            // no-access
+  // mpu_init_struct.access_permission = MPU_REGION_PRIV_DISABLE_USER_DISABLE;
+  // mpu_init_struct.number = MPU_REGION_NUMBER_1;
+  // mpu_region_config(&mpu_init_struct);
 
-  /* configure RAM0 region as region 2, 128kB of size and R/W region */
+  /* configure RAM0 region as region 1, 128kB of size and R/W region */
   mpu_init_struct.enable = MPU_REGION_ENABLE;
   mpu_init_struct.base_address = BOOT_RAM0_BASE_ADDRESS;
   mpu_init_struct.region_size = BOOT_RAM0_SIZE;  // 0x20000000 ~ 0x20020000
   mpu_init_struct.access_permission =
       MPU_REGION_PRIV_READ_WRITE_USER_READ_WRITE;
-  mpu_init_struct.number = MPU_REGION_NUMBER_2;
+  mpu_init_struct.number = MPU_REGION_NUMBER_1;
   mpu_region_config(&mpu_init_struct);
 
-  /* configure RAM1 region as region 3, 64kB of size and R/W region */
+  /* configure RAM1 region as region 2, 64kB of size and R/W region */
   mpu_init_struct.enable = MPU_REGION_ENABLE;
   mpu_init_struct.base_address = BOOT_RAM1_BASE_ADDRESS;
   mpu_init_struct.region_size = BOOT_RAM1_SIZE;  // 0x20020000 ~ 0x20030000
   mpu_init_struct.access_permission =
       MPU_REGION_PRIV_READ_WRITE_USER_READ_WRITE;
-  mpu_init_struct.number = MPU_REGION_NUMBER_3;
+  mpu_init_struct.number = MPU_REGION_NUMBER_2;
   mpu_region_config(&mpu_init_struct);
 
-  /* configure peripheral0 region as region 4, 128MB of size, R/W and
+  /* configure peripheral0 region as region 3, 128MB of size, R/W and
   execute
    * never region */
   mpu_init_struct.enable = MPU_REGION_ENABLE;
@@ -252,11 +252,11 @@ void mpu_setup_boot_region(void) {
   mpu_init_struct.region_size = BOOT_PERIPH0_SIZE;
   mpu_init_struct.access_permission =
       MPU_REGION_PRIV_READ_WRITE_USER_READ_WRITE;
-  mpu_init_struct.number = MPU_REGION_NUMBER_4;
+  mpu_init_struct.number = MPU_REGION_NUMBER_3;
   mpu_init_struct.instruction_accessable = MPU_INSTRUCTION_ACCESS_DISABLE;
   mpu_region_config(&mpu_init_struct);
 
-  /* configure peripheral1 region as region 5, 16KB of size, R/W and
+  /* configure peripheral1 region as region 4, 16KB of size, R/W and
   execute
    * never region */
   mpu_init_struct.enable = MPU_REGION_ENABLE;
@@ -264,18 +264,18 @@ void mpu_setup_boot_region(void) {
   mpu_init_struct.region_size = BOOT_PERIPH1_SIZE;
   mpu_init_struct.access_permission =
       MPU_REGION_PRIV_READ_WRITE_USER_READ_WRITE;
-  mpu_init_struct.number = MPU_REGION_NUMBER_5;
+  mpu_init_struct.number = MPU_REGION_NUMBER_4;
   mpu_init_struct.instruction_accessable = MPU_INSTRUCTION_ACCESS_DISABLE;
   mpu_region_config(&mpu_init_struct);
 
-  /* configure peripheral dma region as region 6, 8KB of size, R/W never
+  /* configure peripheral dma region as region 5, 8KB of size, R/W never
   and execute never region */
   //   gd32 has diffent search scopes commented
   mpu_init_struct.enable = MPU_REGION_ENABLE;
   mpu_init_struct.base_address = BOOT_PERIPH_DMA_BASE_ADDRESS;
   mpu_init_struct.region_size = BOOT_PERIPH_DMA_SIZE;
   mpu_init_struct.access_permission = MPU_REGION_PRIV_DISABLE_USER_DISABLE;
-  mpu_init_struct.number = MPU_REGION_NUMBER_6;
+  mpu_init_struct.number = MPU_REGION_NUMBER_5;
   mpu_init_struct.instruction_accessable = MPU_INSTRUCTION_ACCESS_DISABLE;
   mpu_region_config(&mpu_init_struct);
 
