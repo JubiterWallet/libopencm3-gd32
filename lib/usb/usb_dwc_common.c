@@ -241,7 +241,11 @@ uint16_t dwc_ep_write_packet(usbd_device *usbd_dev, uint8_t addr,
 
 #if GD32F470
   if (addr != 0) {
+    // setup 500ms timeout
+    uint32_t time_out = 500 * 30000;
     while (REBASE(OTG_DIEPTSIZ(addr)) & OTG_DIEPSIZ0_PKTCNT) {
+      if (time_out == 0) break;
+      time_out--;
     }
     dwc_flush_txfifo(usbd_dev, addr);
   }
