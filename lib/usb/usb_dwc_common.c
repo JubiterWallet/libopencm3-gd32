@@ -242,12 +242,17 @@ uint16_t dwc_ep_write_packet(usbd_device *usbd_dev, uint8_t addr,
 #if GD32F470
   if (addr != 0) {
     // setup 500ms timeout
-    uint32_t time_out = 500 * 30000;
+    uint32_t ep_timeout, ep_fifo;
+    ep_timeout = 500 * 300;
     while (REBASE(OTG_DIEPTSIZ(addr)) & OTG_DIEPSIZ0_PKTCNT) {
-      if (time_out == 0) break;
-      time_out--;
+      if (ep_timeout == 0) break;
+      ep_timeout--;
     }
-    dwc_flush_txfifo(usbd_dev, addr);
+    // fixed remove usb not in token
+    /* get fifo for this endpoint */
+    ep_fifo = (REBASE(OTG_DIEPCTL(addr)) & OTG_DIEPCTL0_TXFNUM_MASK) >> 22;
+    /* flush tx fifo */
+    REBASE(OTG_GRSTCTL) = (ep_fifo << 6) | OTG_GRSTCTL_TXFFLSH;
   }
 #endif
 
