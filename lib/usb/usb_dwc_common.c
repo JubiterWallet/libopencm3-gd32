@@ -243,7 +243,7 @@ uint16_t dwc_ep_write_packet(usbd_device *usbd_dev, uint8_t addr,
   if (addr != 0) {
     // setup 500ms timeout
     uint32_t ep_timeout, ep_fifo;
-    ep_timeout = 500 * 300;
+    ep_timeout = 500 * 30000;
     while (REBASE(OTG_DIEPTSIZ(addr)) & OTG_DIEPSIZ0_PKTCNT) {
       if (ep_timeout == 0) break;
       ep_timeout--;
@@ -253,6 +253,14 @@ uint16_t dwc_ep_write_packet(usbd_device *usbd_dev, uint8_t addr,
     ep_fifo = (REBASE(OTG_DIEPCTL(addr)) & OTG_DIEPCTL0_TXFNUM_MASK) >> 22;
     /* flush tx fifo */
     REBASE(OTG_GRSTCTL) = (ep_fifo << 6) | OTG_GRSTCTL_TXFFLSH;
+    /* reset packet counter */
+    REBASE(OTG_DIEPTSIZ(addr)) = 0;
+    ep_timeout = 500 * 30000;
+    while ((REBASE(OTG_GRSTCTL) & OTG_GRSTCTL_TXFFLSH)) {
+      /* idle */
+      if (ep_timeout == 0) break;
+      ep_timeout--;
+    }
   }
 #endif
 
