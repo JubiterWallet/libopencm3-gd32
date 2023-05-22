@@ -17,6 +17,7 @@
  * along with this library.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdint.h>
 #include <string.h>
 #include <libopencm3/cm3/common.h>
 #include <libopencm3/usb/usbd.h>
@@ -196,6 +197,42 @@ static void dwc_flush_txfifo(usbd_device *usbd_dev, int ep) {
   }
 }
 
+static void dwc_fush_txfifo_gd32(usbd_device *usbd_dev, int ep,
+                                 uint32_t ep_timeout) {
+  uint32_t fifo, timeout;
+  timeout = ep_timeout;
+  /* check send send complete*/
+  while (REBASE(OTG_DIEPTSIZ(ep)) & OTG_DIEPSIZ0_PKTCNT) {
+    if (timeout == 0) break;
+    timeout--;
+  }
+  /* set IN endpoint NAK */
+  REBASE(OTG_DIEPCTL(ep)) |= OTG_DIEPCTL0_SNAK;
+  timeout = ep_timeout;
+  /* wait for core to respond */
+  while (!(REBASE(OTG_DIEPINT(ep)) & OTG_DIEPINTX_INEPNE)) {
+    if (timeout == 0) break;
+    timeout--;
+  }
+  /* get fifo for this endpoint */
+  fifo = (REBASE(OTG_DIEPCTL(ep)) & OTG_DIEPCTL0_TXFNUM_MASK) >> 22;
+  timeout = ep_timeout;
+  /* wait for core to idle */
+  while (!(REBASE(OTG_GRSTCTL) & OTG_GRSTCTL_AHBIDL)) {
+    if (timeout == 0) break;
+    timeout--;
+  }
+  /* flush tx fifo */
+  REBASE(OTG_GRSTCTL) = (fifo << 6) | OTG_GRSTCTL_TXFFLSH;
+  /* reset packet counter */
+  REBASE(OTG_DIEPTSIZ(ep)) = 0;
+  timeout = ep_timeout;
+  while ((REBASE(OTG_GRSTCTL) & OTG_GRSTCTL_TXFFLSH)) {
+    if (timeout == 0) break;
+    timeout--;
+  }
+}
+
 uint16_t dwc_ep_write_packet(usbd_device *usbd_dev, uint8_t addr,
                              const void *buf, uint16_t len) {
   const uint32_t *buf32 = buf;
@@ -242,28 +279,10 @@ uint16_t dwc_ep_write_packet(usbd_device *usbd_dev, uint8_t addr,
 #if GD32F470
   if (addr != 0) {
     // setup 500ms timeout
-    uint32_t ep_timeout, ep_fifo;
-    ep_timeout = 500 * 30000;
-    while (REBASE(OTG_DIEPTSIZ(addr)) & OTG_DIEPSIZ0_PKTCNT) {
-      if (ep_timeout == 0) break;
-      ep_timeout--;
-    }
-    // fixed remove usb not in token
-    /* get fifo for this endpoint */
-    ep_fifo = (REBASE(OTG_DIEPCTL(addr)) & OTG_DIEPCTL0_TXFNUM_MASK) >> 22;
-    /* flush tx fifo */
-    REBASE(OTG_GRSTCTL) = (ep_fifo << 6) | OTG_GRSTCTL_TXFFLSH;
-    /* reset packet counter */
-    REBASE(OTG_DIEPTSIZ(addr)) = 0;
-    ep_timeout = 500 * 30000;
-    while ((REBASE(OTG_GRSTCTL) & OTG_GRSTCTL_TXFFLSH)) {
-      /* idle */
-      if (ep_timeout == 0) break;
-      ep_timeout--;
-    }
+    uint32_t set_timeout = 500 * 30000;
+    dwc_fush_txfifo_gd32(usbd_dev, addr, set_timeout);
   }
 #endif
-
   return len;
 }
 
