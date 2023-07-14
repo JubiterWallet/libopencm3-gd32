@@ -110,7 +110,8 @@ void dwc_endpoints_reset(usbd_device *usbd_dev) {
   /* Disable any currently active endpoints */
   for (i = 1; i < 4; i++) {
     if (REBASE(OTG_DOEPCTL(i)) & OTG_DOEPCTL0_EPENA) {
-      REBASE(OTG_DOEPCTL(i)) |= OTG_DOEPCTL0_EPDIS;
+      // FTFixed: gd32f470 on set-configuration stage doesnot disable endpoint.
+      // REBASE(OTG_DOEPCTL(i)) |= OTG_DOEPCTL0_EPDIS;
     }
     if (REBASE(OTG_DIEPCTL(i)) & OTG_DIEPCTL0_EPENA) {
       REBASE(OTG_DIEPCTL(i)) |= OTG_DIEPCTL0_EPDIS;
